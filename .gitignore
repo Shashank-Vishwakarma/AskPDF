@@ -1,3 +1,4 @@
 /client/node_modules
+/client/.next
 .venv
 server/__pycache__/*
