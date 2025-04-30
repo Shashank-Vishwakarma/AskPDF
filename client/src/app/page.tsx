@@ -79,8 +79,8 @@ export default function LandingPage() {
           <p className="text-xl mb-10 opacity-90">
             Join thousands of professionals who save hours by using our AI-powered PDF chat.
           </p>
-          <Button asChild size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
-            <Link href="/signup" className="flex items-center gap-2">
+          <Button asChild size="lg" className="bg-white text-purple-600 hover:bg-gray-100 cursor-pointer">
+            <Link href="/register" className="flex items-center gap-2">
               Get Started Now <ArrowRight size={16} />
             </Link>
           </Button>
