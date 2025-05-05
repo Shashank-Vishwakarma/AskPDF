@@ -2,10 +2,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, FileText, MessageSquare, Upload } from "lucide-react"
 import Image from "next/image"
+import Navbar from "@/components/navbar"
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen">
+      <Navbar />
+    
       {/* Hero Section */}
       <header className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 py-20 max-w-6xl">

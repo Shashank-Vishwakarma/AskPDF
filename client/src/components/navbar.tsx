@@ -1,11 +1,32 @@
 import { User2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
+import Link from "next/link";
+
+const tabs = [
+    {
+        label: "Pricing",
+        href: "/pricing",
+    },
+]
 
 export default function Navbar() {
     return (
         <header className="w-full h-18 sticky flex items-center justify-between border-b border-gray-200 bg-white/60 px-6 py-2">
-            <h3 className="text-2xl font-bold">AskPDF</h3>
+            <Link href="/">
+                <h3 className="text-2xl font-bold">AskPDF</h3>
+            </Link>
+
+            <div>
+                {
+                    tabs.map((tab) => (
+                        <div key={tab.href}>
+                            <Link href={tab.href} className="text-blue-600">
+                                {tab.label}
+                            </Link>
+                        </div>
+                    ))
+                }
+            </div>
 
             <div>
                 <DropdownMenu>
