@@ -18,6 +18,7 @@ class User(SQLModel, table=True):
     name: str = Field(sa_column=Column(pg.TEXT, nullable=False))
     email: str = Field(sa_column=Column(pg.TEXT, unique=True, nullable=False))
     password: str = Field(sa_column=Column(pg.TEXT, nullable=False))
+    plan: str = Field(sa_column=Column(pg.TEXT, nullable=False, default="free"))
 
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now(), nullable=False))
     
