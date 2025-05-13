@@ -6,3 +6,4 @@ server/__pycache__/*
 .env.local
 server/*/__pycache__
 server/src/*/__pycache__
+server/migrations/versions/__pycache__
