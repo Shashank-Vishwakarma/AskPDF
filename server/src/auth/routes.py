@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select
 
-from src.auth.schemas import RegisterUser
+from src.auth.schemas import RegisterUser, LoginUser
 from src.auth.models import User
 from src.db.main import get_db_session
 from src.utils import generate_password_hash, verify_password, generate_token
 from src.middlewares import token_bearer
+from src.auth.service import check_user_exist
 
 auth_router = APIRouter()
 
@@ -29,10 +29,8 @@ async def register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
 
     # Check if user already exists
-    statement = select(User).where(User.email == register_body.email)
-    result = await session.exec(statement)
-
-    if result.first() is not None:
+    user = await check_user_exist(session, register_body.email)
+    if user is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists")
 
     # hash the password
@@ -63,4 +61,41 @@ async def register(
             "token": token,
         },
         status_code=status.HTTP_201_CREATED
+    )
+
+@auth_router.post("/login", status_code=status.HTTP_200_OK)
+async def login(
+    login_user_body: LoginUser,
+    session: AsyncSession = Depends(get_db_session),
+):
+    """
+    Login a user
+
+    Args:
+        login_user_body: LoginUser
+        session: AsyncSession
+    """
+
+    user = await check_user_exist(session, login_user_body.email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User does not exist") 
+    
+    # verify the password
+    if not verify_password(login_user_body.password, user.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid password")   
+
+    # Create jwt token and send it to the user
+    user_data = {
+        "name": user.name,
+        "email": user.email,
+        "plan": user.plan
+    }
+    token = generate_token(user_data)
+
+    return JSONResponse(
+        content={
+            **user_data,
+            "token": token,
+        },
+        status_code=status.HTTP_200_OK
     )

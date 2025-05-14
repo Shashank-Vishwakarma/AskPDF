@@ -7,3 +7,7 @@ class RegisterUser(BaseModel):
     password: str
     confirm_password: str
     plan: Optional[str] = "free"
+
+class LoginUser(BaseModel):
+    email: str
+    password: str
