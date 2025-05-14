@@ -31,7 +31,7 @@ def generate_token(user_data: dict):
 def verify_token(token: str):
     try:
         decoded_payload = jwt.decode(token, key=Config.JWT_SECRET_KEY, algorithms=["HS256"])
-        if decoded_payload["exp"] < datetime.now():
+        if datetime.fromtimestamp(decoded_payload["exp"]) < datetime.now():
             return None
 
         return decoded_payload
