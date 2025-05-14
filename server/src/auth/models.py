@@ -12,6 +12,7 @@ class User(SQLModel, table=True):
             primary_key=True,
             unique=True,
             nullable=False,
+            default=uuid.uuid4(),
         )
     )
 
