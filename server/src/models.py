@@ -1,7 +1,8 @@
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field, Column, Relationship
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from datetime import datetime
+from typing import Optional
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -25,3 +26,27 @@ class User(SQLModel, table=True):
     
     def __repr__(self) -> str:
         return f"<User {self.email}>"
+
+class Document(SQLModel, table=True):
+    __tablename__ = "documents"
+    
+    id: uuid.UUID = Field(
+        sa_column=Column(
+            pg.UUID,
+            primary_key=True,
+            unique=True,
+            nullable=False,
+            default=uuid.uuid4(),
+        )
+    )
+
+    pdf_url: str
+    pdf_name: str
+
+    user_id: Optional[uuid.UUID]  = Field(default=None, foreign_key="users.id")
+    user: User = Relationship(back_populates="users")
+
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now(), nullable=False))
+
+    def __repr__(self) -> str:
+        return f"<Document {self.pdf_name}>"
