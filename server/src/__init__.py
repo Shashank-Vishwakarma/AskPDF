@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from src.auth.routes import auth_router
+from src.docs_ingestion.routes import documents_router
 from src.db.main import initdb
 
 @asynccontextmanager
@@ -20,3 +21,4 @@ app = FastAPI(
 )
 
 app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Authentication"])
+app.include_router(documents_router, prefix=f"/api/{version}/documents", tags=["Documents"])
