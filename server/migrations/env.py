@@ -10,7 +10,7 @@ from alembic import context
 # User imports
 from sqlmodel import SQLModel
 from src.config import Config
-from src.auth.models import User
+from src.models import *
 
 database_url = Config.DATABASE_URL
 

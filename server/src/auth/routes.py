@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.schemas import RegisterUser, LoginUser
-from src.auth.models import User
+from src.models import User
 from src.db.main import get_db_session
 from src.utils import generate_password_hash, verify_password, generate_token
 from src.middlewares import token_bearer

@@ -4,7 +4,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from src.config import Config
-from src.auth.models import User
 
 engine = AsyncEngine(
     create_engine(
