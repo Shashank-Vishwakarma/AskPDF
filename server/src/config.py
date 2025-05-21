@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     QDRANT_PORT: int
     TRANSFORMER_MODEL: str
 
+    # Celery
+    REDIS_URL: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"

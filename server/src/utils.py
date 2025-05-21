@@ -50,4 +50,4 @@ def generate_file_path(file_path: str) -> str:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed")
 
     timestamp = datetime.now().timestamp()
-    return f"{file_path.split('.')[0]}_{str(timestamp).split(".")[0]}_{uuid.uuid4()[:8]}.{ext}"
+    return f"{file_path.split('.')[0]}_{str(timestamp).split(".")[0]}_{str(uuid.uuid4())[:6]}.{ext}"
