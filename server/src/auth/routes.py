@@ -49,6 +49,7 @@ async def register(
     
     # Create jwt token and send it to the user
     user_data = {
+        "id": str(user.id),
         "name": user.name,
         "email": user.email,
         "plan": user.plan
@@ -86,6 +87,7 @@ async def login(
 
     # Create jwt token and send it to the user
     user_data = {
+        "id": str(user.id),
         "name": user.name,
         "email": user.email,
         "plan": user.plan

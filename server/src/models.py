@@ -44,7 +44,7 @@ class Document(SQLModel, table=True):
     pdf_name: str
 
     user_id: Optional[uuid.UUID]  = Field(default=None, foreign_key="users.id")
-    user: User = Relationship(back_populates="users")
+    # user: User = Relationship(back_populates="users")
 
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now(), nullable=False))
 
