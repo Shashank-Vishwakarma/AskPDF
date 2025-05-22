@@ -17,6 +17,6 @@ class TokenBearer(HTTPBearer):
         if not decoded_payload:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
 
-        return decoded_payload
+        return {"token": token, **decoded_payload}
 
 token_bearer = TokenBearer()

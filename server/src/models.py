@@ -9,11 +9,11 @@ class User(SQLModel, table=True):
 
     id: uuid.UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            pg.UUID(as_uuid=True),
             primary_key=True,
             unique=True,
             nullable=False,
-            default=uuid.uuid4(),
+            default=uuid.uuid4,
         )
     )
 
@@ -29,19 +29,20 @@ class User(SQLModel, table=True):
 
 class Document(SQLModel, table=True):
     __tablename__ = "documents"
-    
+
     id: uuid.UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            pg.UUID(as_uuid=True),
             primary_key=True,
             unique=True,
             nullable=False,
-            default=uuid.uuid4(),
+            default=uuid.uuid4,
         )
     )
 
     pdf_url: str
     pdf_name: str
+    insert_status: bool = False
 
     user_id: Optional[uuid.UUID]  = Field(default=None, foreign_key="users.id")
     # user: User = Relationship(back_populates="users")
