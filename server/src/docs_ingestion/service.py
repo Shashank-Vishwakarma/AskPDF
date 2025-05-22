@@ -7,6 +7,7 @@ from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents.base import Document
 from groq import Groq
+import time
 
 from src.config import Config
 from src.utils import generate_file_path
@@ -79,9 +80,10 @@ class QdrantService:
 
             # create points for ingestion into qdrant
             points: list[PointStruct] = []
+            t = int(time.time())
             for idx, doc in enumerate(docs):
                 point = PointStruct(
-                    id=idx,
+                    id=int(idx + t),
                     vector=self.model.encode(doc.page_content).tolist(),
                     payload={
                         "text": doc.page_content,

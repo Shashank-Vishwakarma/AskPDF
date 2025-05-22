@@ -66,7 +66,7 @@ async def get_docs_ingestion_status(
         await session.exec(statement)
         await session.commit()
 
-        return JSONResponse(status_code=status.HTTP_200_OK)
+        return JSONResponse(content={"message": "Status updated successfully"}, status_code=status.HTTP_200_OK)
     except Exception as e:
         print(f"get_docs_ingestion_status: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
