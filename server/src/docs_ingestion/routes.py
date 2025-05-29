@@ -49,7 +49,7 @@ async def ingest_documents(
 
 
 @documents_router.patch("/update/status")
-async def get_docs_ingestion_status(
+async def update_docs_ingestion_status(
     body: UpdateInsertStatus,
     token_details = Depends(token_bearer),
     session: AsyncSession = Depends(get_db_session)
