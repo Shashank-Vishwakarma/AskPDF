@@ -101,14 +101,3 @@ async def login(
         },
         status_code=status.HTTP_200_OK
     )
-
-@auth_router.get("/logout", status_code=status.HTTP_200_OK)
-async def logout(
-    token_details = Depends(token_bearer)
-):
-    return JSONResponse(
-        content={
-            "message": "Logout successful"
-        }, 
-        status_code=status.HTTP_200_OK
-    )
