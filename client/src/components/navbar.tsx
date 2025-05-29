@@ -5,10 +5,25 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Link from "next/link";
 import { useAuthStore } from "@/zustand/store";
 import { Button } from "./ui/button";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
     const user = useAuthStore((state) => state.user);
-    console.log(user)
+    const removeUser = useAuthStore((state) => state.removeUser);
+
+    const router = useRouter()
+
+    useEffect(()=>{
+        if(!user) {
+            router.push("/login")
+        }
+    }, [user, router])
+
+    const handleLogout = ()=>{
+        removeUser()
+        localStorage.removeItem("user")
+    }
 
     return (
         <header className="w-full h-18 sticky flex items-center justify-between border-b border-gray-200 bg-white/60 px-6 py-2">
@@ -29,7 +44,7 @@ export default function Navbar() {
                                         <p>Dashboard</p>
                                     </DropdownMenuItem>
                                 </Link>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleLogout}>
                                     <p>Logout</p>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
