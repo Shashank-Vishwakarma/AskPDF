@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Send } from "lucide-react"
 import Link from "next/link"
 import Navbar from "@/components/navbar"
+import axios from "axios"
+import { useParams } from "next/navigation"
 
 // Mock PDF data
 const mockPdf = {
@@ -21,11 +23,33 @@ const initialMessages = [
   { id: 1, role: "system", content: "Hello! I'm your PDF assistant. Ask me anything about this document." },
 ]
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const params = useParams();
+
+  useEffect(()=>{
+    const fetchPdf = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/documents/${params.fileId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+            }
+          }
+        );
+        console.log(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchPdf()
+  }, [])
 
   // Scroll to bottom of messages
   useEffect(() => {

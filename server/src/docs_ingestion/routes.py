@@ -109,3 +109,28 @@ async def delete_pdf(
     except Exception as e:
         print(f"delete_pdf: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@documents_router.get("/{doc_id}")
+async def get_pdf_details(
+    doc_id: str,
+    token_details = Depends(token_bearer),
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        statement = select(Document).where(Document.id == doc_id).where(Document.user_id == token_details["user"]["id"])
+        result = await session.exec(statement)
+
+        data = result.first()
+        if data is None:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+        doc = {
+            "id": data.id.hex,
+            "name": data.pdf_name,
+            "url": data.pdf_url
+        }
+
+        return JSONResponse(content=doc, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"get_pdf_details: Error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
