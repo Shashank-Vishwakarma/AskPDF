@@ -9,6 +9,7 @@ import axios from "axios";
 import { FileText, Plus, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast"
 
 interface PDF {
     id: string;
@@ -61,6 +62,7 @@ export default function Dashboard() {
                 }
             );
             console.log(response.data);
+            toast.success("Document uploaded successfully")
         } catch (error) {
             console.error(error);
         } finally {
@@ -68,7 +70,24 @@ export default function Dashboard() {
             setIsOpen(false)
         }
     }
-    
+
+    const deleteDoc = async (id: string) => {
+        try {
+            const response = await axios.delete(
+                `http://localhost:8000/api/v1/documents/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+                    }
+                }
+            );
+            console.log(response.data);
+            toast.success("Document deleted successfully")
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     return <div className="min-h-screen">
         <Navbar />
 
@@ -133,7 +152,7 @@ export default function Dashboard() {
                             <Button variant="outline" size="sm" asChild>
                             <Link href={`/chat/${pdf.id}`}>Chat</Link>
                             </Button>
-                            <Button variant="destructive" className="hover:cursor-pointer">
+                            <Button variant="destructive" className="hover:cursor-pointer" onClick={()=> deleteDoc(pdf.id)}>
                                 <Trash2 />
                             </Button>
                         </CardFooter>

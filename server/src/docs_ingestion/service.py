@@ -37,6 +37,12 @@ class SupabaseService:
             print("upload_file: Error: ", str(e))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
+    def delete_file(self, pdf_path: str):
+        try:
+            self.client.storage.from_("docs").remove(pdf_path)
+        except Exception as e:
+            print("delete_file: Error: ", str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
 class QdrantService:
     client: QdrantClient

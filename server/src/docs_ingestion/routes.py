@@ -85,3 +85,27 @@ async def get_all_docs(
     except Exception as e:
         print(f"get_docs_ingestion_status: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@documents_router.delete("/{doc_id}")
+async def delete_pdf(
+    doc_id: str,
+    token_details = Depends(token_bearer),
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        statement = select(Document).where(Document.id == doc_id).where(Document.user_id == token_details["user"]["id"])
+        result = await session.exec(statement)
+        
+        data = result.first()
+        if data is None:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+        pdf_path = data.pdf_url.split("/")[-1]
+        supabase_service.delete_file(pdf_path)
+        await session.delete(data)
+        await session.commit()
+
+        return JSONResponse(content={"message": "Document deleted successfully"}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"delete_pdf: Error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
