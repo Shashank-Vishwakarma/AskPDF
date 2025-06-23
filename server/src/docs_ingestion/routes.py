@@ -70,3 +70,18 @@ async def update_docs_ingestion_status(
     except Exception as e:
         print(f"get_docs_ingestion_status: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@documents_router.get("/all")
+async def get_all_docs(
+    token_details = Depends(token_bearer),
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        statement = select(Document).where(Document.user_id == token_details["user"]["id"])
+        result = await session.exec(statement)
+
+        docs = [{"id": doc.id.hex, "pdf_name": doc.pdf_name, "created_at": doc.created_at.strftime("%Y-%m-%d")} for doc in result.all()]
+        return JSONResponse(content={"documents": docs}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"get_docs_ingestion_status: Error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

@@ -5,21 +5,69 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 import { FileText, Plus, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const filteredPdfs = [
-    { id: 1, name: "Business Proposal.pdf", date: "2023-04-15", pages: 12 },
-    { id: 2, name: "Financial Report Q1.pdf", date: "2023-03-30", pages: 24 },
-    { id: 3, name: "Product Manual.pdf", date: "2023-02-18", pages: 45 },
-    { id: 4, name: "Research Paper.pdf", date: "2023-01-22", pages: 18 },
-    { id: 5, name: "Meeting Notes.pdf", date: "2023-04-10", pages: 5 },
-]
+interface PDF {
+    id: string;
+    pdf_name: string;
+    created_at: string;
+}
 
 export default function Dashboard() {
-    // const [filteredPdfs, setFilteredPdfs] = useState([]);
+    const [filteredPdfs, setFilteredPdfs] = useState<PDF[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [currentPdfFile, setCurrentPdfFile] = useState<File | null>(null);
+
+    useEffect(()=>{
+        const fetchDocs = async () => {
+            try {
+                const response = await axios.get(
+                    "http://localhost:8000/api/v1/documents/all",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+                        }
+                    }
+                );
+                console.log(response.data.documents);
+                setFilteredPdfs(response.data.documents)
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        fetchDocs()
+    }, [])
+
+    const ingestDoc = async () => {
+        if(!currentPdfFile) return
+
+        const formData = new FormData()
+        formData.append("file", currentPdfFile)
+
+        setIsUploading(true);
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/api/v1/documents/ingest",
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+                    }
+                }
+            );
+            console.log(response.data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsUploading(false);
+            setIsOpen(false)
+        }
+    }
     
     return <div className="min-h-screen">
         <Navbar />
@@ -27,10 +75,10 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-8 px-6 py-8">
             <h1 className="text-3xl font-bold">Your PDFs</h1>
 
-            <Dialog>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                    <Plus className="mr-2 h-4 w-4" /> Upload PDF
+                    <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => setIsOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" /> Upload PDF
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -41,7 +89,7 @@ export default function Dashboard() {
                     <div className="grid gap-4 py-4">
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
                         <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                        <Input type="file" accept=".pdf" className="hidden" id="pdf-upload" />
+                        <Input type="file" accept=".pdf" className="hidden" id="pdf-upload" onChange={(e) => setCurrentPdfFile(e.target.files![0])} />
                         <Button
                             variant="outline"
                             onClick={() => document.getElementById("pdf-upload")?.click()}
@@ -49,10 +97,17 @@ export default function Dashboard() {
                         >
                             Select PDF
                         </Button>
+                        <div>
+                            <p>{currentPdfFile && currentPdfFile.name}</p>
+                        </div>
                     </div>
                     </div>
                     <DialogFooter>
-                    <Button disabled={isUploading} className="bg-purple-600 hover:bg-purple-700 cursor-pointer">
+                    <Button 
+                        disabled={isUploading} 
+                        className="bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                        onClick={ingestDoc}
+                    >
                         {isUploading ? "Uploading..." : "Upload"}
                     </Button>
                     </DialogFooter>
@@ -67,12 +122,11 @@ export default function Dashboard() {
                             <FileText className="h-16 w-16 text-gray-400" />
                         </div>
                         <CardContent className="p-4">
-                            <h3 className="font-medium truncate" title={pdf.name}>
-                                {pdf.name}
+                            <h3 className="font-medium truncate" title={pdf.pdf_name}>
+                                {pdf.pdf_name}
                             </h3>
                             <div className="flex justify-between text-sm text-gray-500 mt-1">
-                            <span>{pdf.date}</span>
-                            <span>{pdf.pages} pages</span>
+                            <span>{pdf.created_at}</span>
                             </div>
                         </CardContent>
                         <CardFooter className="p-4 pt-0 flex justify-between">
@@ -80,7 +134,6 @@ export default function Dashboard() {
                             <Link href={`/chat/${pdf.id}`}>Chat</Link>
                             </Button>
                             <Button variant="destructive" className="hover:cursor-pointer">
-                                {/* <Link href={`/chat/${pdf.id}`}>Chat</Link> */}
                                 <Trash2 />
                             </Button>
                         </CardFooter>
