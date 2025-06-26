@@ -4,11 +4,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import update, select
 from typing import Annotated
 from src.middlewares import token_bearer
-from src.docs_ingestion.service import supabase_service
+from src.docs_ingestion.service import supabase_service, qdrant_service, ai_service
 from src.celery import ingest_docs_into_qdrant
 from src.models import Document
 from src.db.main import get_db_session
-from src.docs_ingestion.schemas import UpdateInsertStatus
+from src.docs_ingestion.schemas import UpdateInsertStatus, ChatRequestBody
 from src import models
 
 documents_router = APIRouter()
@@ -134,4 +134,92 @@ async def get_pdf_details(
         return JSONResponse(content=doc, status_code=status.HTTP_200_OK)
     except Exception as e:
         print(f"get_pdf_details: Error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@documents_router.get("/{doc_id}/user/pdf/chats")
+async def get_chats(
+    doc_id: str,
+    token_details = Depends(token_bearer),
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        statement = select(Document).where(Document.id == doc_id).where(Document.user_id == token_details["user"]["id"])
+        result = await session.exec(statement)
+        data = result.first()
+        if not data:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+        statement = select(models.Chat).where(models.Chat.user_id == token_details["user"]["id"]).where(models.Chat.pdf_id == doc_id)
+        result = await session.exec(statement)
+        chats = result.all()
+
+        conversations = [{"id": chat.id.hex, "role": chat.role, "content": chat.content, "created_at": chat.created_at.strftime("%Y-%m-%d %H:%M:%S")} for chat in chats]
+        return JSONResponse(content={"chats": conversations}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"get_chats: Error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@documents_router.post("/{doc_id}/chats")
+async def chat(
+    doc_id: str,
+    body: ChatRequestBody,
+    token_details = Depends(token_bearer),
+    session: AsyncSession = Depends(get_db_session)
+):
+    try:
+        request_body = body.dict()
+
+        # Check user has the pdf
+        statement = select(Document).where(Document.id == doc_id).where(Document.user_id == token_details["user"]["id"])
+        result = await session.exec(statement)
+        data = result.first()
+        if not data:
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+        # Save user query
+        chat = models.Chat(user_id=token_details["user"]["id"], pdf_id=doc_id, role="user", content=request_body["query"])
+        session.add(chat)
+        await session.commit()
+
+        # Get the previous conversations
+        statement = select(models.Chat).where(models.Chat.user_id == token_details["user"]["id"]).where(models.Chat.pdf_id == doc_id).order_by(models.Chat.created_at)
+        result = await session.exec(statement)
+        conversations = result.all()
+        chat_history = [{"role": chat.role, "content": chat.content} for chat in conversations]
+
+        # Retrieve data from qdrant
+        context_documents = qdrant_service.retrieve_documents(collection_name="pdf_docs", query=request_body["query"], user_id=token_details["user"]["id"], pdf_url=data.pdf_url, limit=5)
+
+        messages = [
+            {
+                "role": "system",
+                "content": """
+                    You are a helpful AI assistant.
+                    You are given the following extracted parts of a long document and a question.
+                    Provide a conversational answer.
+                    Construct a response that appropriately completes the question.
+
+                    Constraints:
+                    1. Avoid repeating information.
+                    2. Answer the question as concisely as possible.
+                    
+                    Return answer as string output.
+                """
+            },
+        ]
+        messages.extend(chat_history)
+        messages.extend([{"role": "user", "content": doc} for doc in context_documents])
+        messages.append({"role": "user", "content": request_body["query"]})
+
+        # Get response from AI
+        response = ai_service.get_ai_response(messages)
+
+        # Save user query
+        chat = models.Chat(user_id=token_details["user"]["id"], pdf_id=doc_id, role="assistant", content=response)
+        session.add(chat)
+        await session.commit()
+
+        return JSONResponse(content={"response": response}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"chat: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

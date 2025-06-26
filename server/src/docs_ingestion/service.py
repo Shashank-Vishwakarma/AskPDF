@@ -141,6 +141,23 @@ class QdrantService:
             print("retrieve_documents: Error: ", str(e))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
+class AIService:
+    client: Groq
+
+    def __init__(self, api_key: str):
+        self.client = Groq(api_key=api_key)
+
+    def get_ai_response(self, messages: list[dict]):
+        try:
+            response = self.client.chat.completions.create(
+                messages=messages,
+                model="llama3-8b-8192"
+            )
+
+            return response.choices[0].message.content
+        except Exception as e:
+            print("get_ai_response: Error: ", str(e))
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
 supabase_service = SupabaseService(
     supabase_key=Config.SUPABASE_KEY,
@@ -151,4 +168,8 @@ qdrant_service = QdrantService(
     qdrant_host=Config.QDRANT_HOST,
     qdrant_port=Config.QDRANT_PORT, 
     transformer_model=Config.TRANSFORMER_MODEL
+)
+
+ai_service = AIService(
+    api_key=Config.GROQ_API_KEY
 )
