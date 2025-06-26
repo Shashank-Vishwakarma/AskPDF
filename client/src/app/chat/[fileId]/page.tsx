@@ -10,23 +10,28 @@ import Link from "next/link"
 import Navbar from "@/components/navbar"
 import axios from "axios"
 import { useParams } from "next/navigation"
+import { cn } from "@/lib/utils"
 
-// Mock PDF data
-const mockPdf = {
-  id: 1,
-  name: "Business Proposal.pdf",
-  url: "/placeholder.svg?height=800&width=600",
+type ROLE = "user" | "assistant"
+
+interface Chat {
+  id: string
+  role: ROLE
+  content: string
 }
 
-// Mock chat messages
-const initialMessages = [
-  { id: 1, role: "system", content: "Hello! I'm your PDF assistant. Ask me anything about this document." },
-]
+interface PDFDoc {
+  id: number
+  name: string
+  url: string
+  insert_status: boolean
+}
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState(initialMessages)
+  const [messages, setMessages] = useState<Chat[] | null>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [pdf, setPdf] = useState<PDFDoc | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const params = useParams();
@@ -43,6 +48,7 @@ export default function ChatPage() {
           }
         );
         console.log(response.data);
+        setPdf(response.data)
       } catch (error) {
         console.error(error);
       }
@@ -59,23 +65,6 @@ export default function ChatPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
-
-    // Add user message
-    const userMessage = { id: Date.now(), role: "user", content: input }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage = {
-        id: Date.now(),
-        role: "assistant",
-        content: `I've analyzed the document and found information related to "${input}". The business proposal contains details about project scope, timeline, and budget considerations. Would you like me to elaborate on any specific section?`,
-      }
-      setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1500)
   }
 
   return (
@@ -90,24 +79,35 @@ export default function ChatPage() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
-              <h2 className="font-semibold">{mockPdf.name}</h2>
+              <h2 className="font-semibold">{pdf?.name}</h2>
             </div>
             <div className="bg-gray-100 rounded-lg h-[calc(100%-40px)] overflow-auto">
-              {/* <iframe src={mockPdf.url} className="w-full h-full" title={mockPdf.name} /> */}
+              <iframe src={pdf?.url} className="w-full h-full" title={pdf?.name} />
             </div>
           </div>
 
         {/* Chat Interface */}
         <div className="w-1/2 flex flex-col">
           <div className="flex-1 p-4 overflow-auto">
-            <div className="space-y-4">
-              {messages.map((message) => (
+            <div className={cn("space-y-4", messages?.length==0 ? "flex items-center justify-center h-full" : "")}>
+              {pdf?.insert_status == false ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">We are processing the document, please wait. If it takes too long, try to upload the document again.</p>
+                  </div>
+                ): messages?.length==0 && (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
+                  </div>
+                )
+              }
+
+              {messages?.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[80%] rounded-lg p-3 ${
                       message.role === "user"
                         ? "bg-purple-600 text-white"
-                        : message.role === "system"
+                        : message.role === "assistant"
                           ? "bg-gray-200 text-gray-800"
                           : "bg-gray-100 text-gray-800"
                     }`}

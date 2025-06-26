@@ -127,7 +127,8 @@ async def get_pdf_details(
         doc = {
             "id": data.id.hex,
             "name": data.pdf_name,
-            "url": data.pdf_url
+            "url": data.pdf_url, 
+            "insert_status": data.insert_status
         }
 
         return JSONResponse(content=doc, status_code=status.HTTP_200_OK)
