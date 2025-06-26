@@ -35,7 +35,7 @@ async def ingest_documents(
         await session.commit()
 
         # Ingest pdf into qdrant collection
-        ingest_docs_into_qdrant.delay(collection_name="pdf_docs", pdf_path=pdf_path, token=token_details["token"])
+        ingest_docs_into_qdrant.delay(collection_name="pdf_docs", pdf_path=pdf_path, token=token_details["token"], user_id=token_details["user"]["id"])
 
         return JSONResponse(
             content={
@@ -55,7 +55,7 @@ async def update_docs_ingestion_status(
     session: AsyncSession = Depends(get_db_session)
 ):
     try:
-        statement = select(Document).where(models.Document.pdf_url == body.pdf_path)
+        statement = select(Document).where(models.Document.pdf_url == body.pdf_path).where(Document.user_id == token_details["user"]["id"])
         result = await session.exec(statement)
         if result.first() is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Document not found")

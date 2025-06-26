@@ -12,9 +12,9 @@ celery_app = Celery(
 )
 
 @celery_app.task
-def ingest_docs_into_qdrant(collection_name: str, pdf_path: str, token: str):
+def ingest_docs_into_qdrant(collection_name: str, pdf_path: str, token: str, user_id: str):
     try:
-        qdrant_service.ingest_documents(collection_name=collection_name, pdf_path=pdf_path)
+        qdrant_service.ingest_documents(collection_name=collection_name, pdf_path=pdf_path, user_id=user_id)
 
         response = requests.patch(
             "http://localhost:8000/api/v1/documents/update/status",

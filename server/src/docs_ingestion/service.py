@@ -1,6 +1,6 @@
 from supabase import Client
 from fastapi import UploadFile, HTTPException, status
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.models import VectorParams, Distance, PointStruct
 from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import CharacterTextSplitter
@@ -77,7 +77,7 @@ class QdrantService:
             print("create_collection: Error: ", str(e))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
-    def ingest_documents(self, collection_name: str, pdf_path: str):
+    def ingest_documents(self, collection_name: str, pdf_path: str, user_id: str):
         try:
             if not self.client.collection_exists(collection_name):
                 self.create_collection(collection_name)
@@ -93,6 +93,7 @@ class QdrantService:
                     vector=self.model.encode(doc.page_content).tolist(),
                     payload={
                         "text": doc.page_content,
+                        "user_id": user_id,
                         **doc.metadata
                     }
                 )
@@ -106,14 +107,30 @@ class QdrantService:
             print("ingest_documents: Error: ", str(e))
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something went wrong!")
 
-    def retrieve_documents(self, collection_name: str, query: str, limit: int = 5):
+    def retrieve_documents(self, collection_name: str, query: str, user_id: str, pdf_url: str, limit: int = 5):
         try:
+            # Filter based on user id, pdf_name and pdf_url
+            filter_match = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="user_id",
+                        match=models.MatchValue(value=user_id)
+                    ),
+                    models.FieldCondition(
+                        key="source",
+                        match=models.MatchValue(value=pdf_url)
+                    )
+                ]
+            )
+
+            # Search
             response = self.client.search(
                 collection_name=collection_name,
                 limit=limit,
                 query_vector=self.model.encode(query).tolist(),
+                query_filter=filter_match
             )
-            
+
             # Extract only text field
             results = []
             for result in response:
