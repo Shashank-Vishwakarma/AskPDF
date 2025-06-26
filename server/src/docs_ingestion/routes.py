@@ -154,7 +154,7 @@ async def get_chats(
         chats = result.all()
 
         conversations = [{"id": chat.id.hex, "role": chat.role, "content": chat.content, "created_at": chat.created_at.strftime("%Y-%m-%d %H:%M:%S")} for chat in chats]
-        return JSONResponse(content={"chats": conversations}, status_code=status.HTTP_200_OK)
+        return JSONResponse(content=conversations, status_code=status.HTTP_200_OK)
     except Exception as e:
         print(f"get_chats: Error: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

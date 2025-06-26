@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils"
 
 type ROLE = "user" | "assistant"
 
-interface Chat {
-  id: string
+interface Message {
   role: ROLE
   content: string
+  created_at: string
 }
 
 interface PDFDoc {
@@ -28,7 +28,7 @@ interface PDFDoc {
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Chat[] | null>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [pdf, setPdf] = useState<PDFDoc | null>(null)
@@ -47,7 +47,6 @@ export default function ChatPage() {
             }
           }
         );
-        console.log(response.data);
         setPdf(response.data)
       } catch (error) {
         console.error(error);
@@ -57,6 +56,30 @@ export default function ChatPage() {
     fetchPdf()
   }, [])
 
+  useEffect(()=>{
+    const fetchConversation = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/documents/${params.fileId}/user/pdf/chats`,
+          {
+            headers: {
+              Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+            }
+          }
+        );
+        setMessages(response.data)
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if(pdf?.insert_status) {
+      fetchConversation()
+    } else {
+      setMessages([])
+    }
+  }, [pdf])
+
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -65,6 +88,36 @@ export default function ChatPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
+
+    setIsLoading(true)
+    try {
+      setMessages(prev => [...prev, {
+        role: "user",
+        content: input,
+        created_at: new Date(Date.now()).toISOString()
+      }])
+      setInput("")
+
+      const response = await axios.post(
+        `http://localhost:8000/api/v1/documents/${params.fileId}/chats`,
+        { query: input },
+        {
+          headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")!)["token"]} `,
+          }
+        }
+      )
+
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: response.data.response,
+        created_at: response.data.created_at
+      }])
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -98,24 +151,27 @@ export default function ChatPage() {
                   <div className="flex items-center justify-center h-full">
                     <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
                   </div>
+                ) ? messages?.map((message) => (
+                  <div key={message.role+message.content+message.created_at} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.role === "user"
+                          ? "bg-purple-600 text-white"
+                          : message.role === "assistant"
+                            ? "bg-gray-200 text-gray-800"
+                            : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
+                  </div>
                 )
               }
 
-              {messages?.map((message) => (
-                <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.role === "user"
-                        ? "bg-purple-600 text-white"
-                        : message.role === "assistant"
-                          ? "bg-gray-200 text-gray-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              ))}
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="max-w-[80%] rounded-lg p-3 bg-gray-100">
