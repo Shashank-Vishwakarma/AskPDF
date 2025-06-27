@@ -37,14 +37,19 @@ Powered by advanced technologies, AskPDF processes and indexes your documents, e
 ## Screenshots 📸
 
 ### Dashboard Page
+![askpdf-dashboard](https://github.com/user-attachments/assets/a3f672dc-1c45-4da9-9fba-c9f57683ac06)
 
 ### Chat Interface
+![askpdf-chat-interface](https://github.com/user-attachments/assets/0a5c9d2a-5900-4b1f-bc76-8bf632e54ead)
 
 ### PDF Upload
+![Screenshot 2025-06-27 220850](https://github.com/user-attachments/assets/c078cc54-251b-4511-8cc5-ff22c33417f9)
 
 ### Login Page
+![Screenshot 2025-06-27 220926](https://github.com/user-attachments/assets/4bcf6262-4a2b-4fb2-8660-0f77bce96131)
 
 ### Register Page
+![askpdf-register](https://github.com/user-attachments/assets/3aa4a571-f347-46b8-aa56-3e829f05b78a)
 
 ---
 
