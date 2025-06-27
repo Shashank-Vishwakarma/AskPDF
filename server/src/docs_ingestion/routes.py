@@ -203,7 +203,7 @@ async def chat(
                     1. Avoid repeating information.
                     2. Answer the question as concisely as possible.
                     
-                    Return answer as string output.
+                    Return answer as string output in markdown format.
                 """
             },
         ]

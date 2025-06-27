@@ -11,6 +11,7 @@ import Navbar from "@/components/navbar"
 import axios from "axios"
 import { useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
+import Markdown from "react-markdown"
 
 type ROLE = "user" | "assistant"
 
@@ -121,11 +122,11 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-20px)] bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50">
         <Navbar />
-        
+
         <div className="flex gap-2 h-full">
-          <div className="w-1/2 p-4 border-r">
+          <div className="w-2/5 p-4 border-r">
             <div className="flex items-center gap-2 mb-4">
               <Link href="/dashboard">
                 <Button variant="ghost" size="icon">
@@ -139,76 +140,76 @@ export default function ChatPage() {
             </div>
           </div>
 
-        {/* Chat Interface */}
-        <div className="w-1/2 flex flex-col">
-          <div className="flex-1 p-4 overflow-auto">
-            <div className={cn("space-y-4", messages?.length==0 ? "flex items-center justify-center h-full" : "")}>
-              {pdf?.insert_status == false ? (
+          <div className="w-3/5 flex flex-col">
+            <div className="flex-1 p-4 overflow-auto">
+              <div className={cn("space-y-4", messages?.length==0 ? "flex items-center justify-center h-full" : "")}>
+                {pdf?.insert_status && messages?.length==0 && (
+                  <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
+                    </div>
+                )}
+
+                {pdf?.insert_status && messages?.length>0 && messages?.map((message) => (
+                    <div key={message.role+message.content+message.created_at} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          message.role === "user"
+                            ? "bg-purple-600 text-white"
+                            : message.role === "assistant"
+                              ? "bg-gray-200 text-gray-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <Markdown>
+                        {message.content}
+                        </Markdown>
+                      </div>
+                    </div>
+                  ))}
+
+                {pdf?.insert_status == false && (
                   <div className="flex items-center justify-center h-full">
                     <p className="text-gray-500">We are processing the document, please wait. If it takes too long, try to upload the document again.</p>
                   </div>
-                ): messages?.length==0 && (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
-                  </div>
-                ) ? messages?.map((message) => (
-                  <div key={message.role+message.content+message.created_at} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.role === "user"
-                          ? "bg-purple-600 text-white"
-                          : message.role === "assistant"
-                            ? "bg-gray-200 text-gray-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
-                )) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Start a conversation by typing in the input box below.</p>
-                  </div>
-                )
-              }
+                )}
 
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg p-3 bg-gray-100">
-                    <div className="flex space-x-2">
-                      <div
-                        className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></div>
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] rounded-lg p-3 bg-gray-100">
+                      <div className="flex space-x-2">
+                        <div
+                          className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+            <div className="p-4 border-t">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask a question about this PDF..."
+                  disabled={isLoading}
+                />
+                <Button type="submit" disabled={isLoading || !input.trim()} className="bg-purple-600 hover:bg-purple-700">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
           </div>
-          <div className="p-4 border-t">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask a question about this PDF..."
-                disabled={isLoading}
-              />
-              <Button type="submit" disabled={isLoading || !input.trim()} className="bg-purple-600 hover:bg-purple-700">
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
         </div>
       </div>
   )
